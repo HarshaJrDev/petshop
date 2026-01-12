@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     View,
     Text,
@@ -25,59 +25,86 @@ interface AddPetFormProps {
 
 const noop = () => { };
 
-const AddPetForm: React.FC<AddPetFormProps> = ({
-    onPetAdded = noop,
-}) => {
-    const [visible, setVisible] = useState(false);
+type FormState = {
+    name: string;
+    breed: string;
+    age: string;
+    price: string;
+};
 
-    const [formData, setFormData] = useState({
-        name: '',
-        breed: '',
-        age: '',
-        price: '',
-    });
+const INITIAL_FORM: FormState = {
+    name: '',
+    breed: '',
+    age: '',
+    price: '',
+};
 
+const AddPetForm: React.FC<AddPetFormProps> = ({ onPetAdded = noop }) => {
+    const [visible, setVisible] = useState<boolean>(false);
+    const [formData, setFormData] = useState<FormState>(INITIAL_FORM);
     const [image, setImage] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState<boolean>(false);
     const [toast, setToast] = useState<{
         message: string;
         type: 'success' | 'error' | 'info';
     } | null>(null);
 
-    const requestPermissions = async (): Promise<boolean> => {
-        const { status } =
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
+    const requestCameraPermission = useCallback(async (): Promise<boolean> => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+        if (status !== ImagePicker.PermissionStatus.GRANTED) {
             Alert.alert(
-                'Permission Required',
-                'Please allow photo access to upload pet images.'
+                'Camera Permission Required',
+                'Please allow camera access to take pet photos.'
             );
             return false;
         }
+
         return true;
-    };
+    }, []);
 
-    const pickImage = async (fromCamera = false) => {
-        const hasPermission = await requestPermissions();
-        if (!hasPermission) return;
+    const requestMediaPermission = useCallback(async (): Promise<boolean> => {
+        const { status } =
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        const result = fromCamera
-            ? await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                quality: 0.8,
-            })
-            : await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                quality: 0.8,
-            });
-
-        if (!result.canceled && result.assets?.[0]) {
-            setImage(result.assets[0].uri);
+        if (status !== ImagePicker.PermissionStatus.GRANTED) {
+            Alert.alert(
+                'Gallery Permission Required',
+                'Please allow photo access to select pet images.'
+            );
+            return false;
         }
-    };
 
-    const handleSubmit = async () => {
+        return true;
+    }, []);
+
+    const pickImage = useCallback(
+        async (fromCamera: boolean) => {
+            const hasPermission = fromCamera
+                ? await requestCameraPermission()
+                : await requestMediaPermission();
+
+            if (!hasPermission) return;
+
+            const result = fromCamera
+                ? await ImagePicker.launchCameraAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    quality: 0.8,
+                })
+                : await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    quality: 0.8,
+                });
+
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setImage(result.assets[0].uri);
+            }
+        },
+        [requestCameraPermission, requestMediaPermission]
+    );
+
+    const handleSubmit = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -106,14 +133,14 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
 
             onPetAdded(newPet);
 
-            setFormData({ name: '', breed: '', age: '', price: '' });
+            setFormData(INITIAL_FORM);
             setImage(null);
             setVisible(false);
             setToast({ message: 'Pet added successfully', type: 'success' });
         } catch (error: any) {
             if (error?.name === 'ValidationError') {
                 const validationErrors: Record<string, string> = {};
-                error.inner.forEach((err: any) => {
+                error.inner?.forEach((err: any) => {
                     if (err.path) validationErrors[err.path] = err.message;
                 });
                 setErrors(validationErrors);
@@ -126,10 +153,17 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData, image, onPetAdded]);
 
     return (
         <>
+            <Toast
+                message={toast?.message ?? ''}
+                type={toast?.type ?? 'info'}
+                visible={!!toast}
+                onHide={() => setToast(null)}
+            />
+
             <TouchableOpacity
                 style={styles.openButton}
                 onPress={() => setVisible(true)}
@@ -137,6 +171,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 <Ionicons name="add-circle-outline" size={20} />
                 <Text style={styles.openButtonText}>Add New Pet</Text>
             </TouchableOpacity>
+
             <Modal
                 visible={visible}
                 animationType="slide"
@@ -144,13 +179,6 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                 onRequestClose={() => setVisible(false)}
             >
                 <ScrollView style={styles.container}>
-                    <Toast
-                        message={toast?.message || ''}
-                        type={toast?.type || 'info'}
-                        visible={!!toast}
-                        onHide={() => setToast(null)}
-                    />
-
                     <View style={styles.header}>
                         <Text style={styles.title}>Add a New Pet</Text>
                         <TouchableOpacity onPress={() => setVisible(false)}>
@@ -185,32 +213,39 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
                     </View>
 
                     <View style={styles.card}>
-                        {(['name', 'breed', 'age', 'price'] as const).map((field) => (
-                            <View key={field} style={styles.inputGroup}>
-                                <Text style={styles.label}>{field.toUpperCase()}</Text>
-                                <TextInput
-                                    style={[
-                                        styles.input,
-                                        errors[field] && styles.inputError,
-                                    ]}
-                                    value={formData[field]}
-                                    onChangeText={(text) =>
-                                        setFormData((p) => ({ ...p, [field]: text }))
-                                    }
-                                    keyboardType={
-                                        field === 'age'
-                                            ? 'numeric'
-                                            : field === 'price'
-                                                ? 'decimal-pad'
-                                                : 'default'
-                                    }
-                                    placeholder={`Enter ${field}`}
-                                />
-                                {errors[field] && (
-                                    <Text style={styles.errorText}>{errors[field]}</Text>
-                                )}
-                            </View>
-                        ))}
+                        {(Object.keys(formData) as Array<keyof FormState>).map(
+                            (field) => (
+                                <View key={field} style={styles.inputGroup}>
+                                    <Text style={styles.label}>{field.toUpperCase()}</Text>
+                                    <TextInput
+                                        style={[
+                                            styles.input,
+                                            errors[field] && styles.inputError,
+                                        ]}
+                                        value={formData[field]}
+                                        onChangeText={(text) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                [field]: text,
+                                            }))
+                                        }
+                                        keyboardType={
+                                            field === 'age'
+                                                ? 'numeric'
+                                                : field === 'price'
+                                                    ? 'decimal-pad'
+                                                    : 'default'
+                                        }
+                                        placeholder={`Enter ${field}`}
+                                    />
+                                    {errors[field] && (
+                                        <Text style={styles.errorText}>
+                                            {errors[field]}
+                                        </Text>
+                                    )}
+                                </View>
+                            )
+                        )}
                     </View>
 
                     <TouchableOpacity
@@ -234,6 +269,7 @@ const AddPetForm: React.FC<AddPetFormProps> = ({
 };
 
 export default AddPetForm;
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -341,4 +377,4 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-});     
+});

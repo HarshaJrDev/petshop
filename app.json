@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to take pet photos.",
+        "NSPhotoLibraryUsageDescription": "This app accesses photos to upload pet images."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,6 +22,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+       "permissions": ["CAMERA", "READ_MEDIA_IMAGES"],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
