@@ -1,50 +1,64 @@
-# Welcome to your Expo app 👋
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+🐾 Pet Store Mobile App
+A cross-platform React Native (Expo) application for browsing pets, viewing details, and adding pets via validated forms.
+Built with scalability, type safety, and maintainability as first-class concerns.
+📱 Platforms Supported
+iOS (Simulator & Physical Device)
+Android (Emulator & Physical Device)
+Built using Expo, ensuring a single codebase with native performance.
+🧱 Tech Stack & Libraries Used
+Core
+React Native
+Expo
+TypeScript – strict typing across the app
+UI & Navigation
+expo-router – file-based, typed navigation
+react-native-safe-area-context
+@expo/vector-icons
+Forms & Validation
+Yup / Zod – schema-based validation
+JSON Schema – portable validation definition
+Controlled inputs with validation feedback
+Media
+expo-image-picker – camera & gallery access
+State & Logic
+React Hooks
+Feature-based component structure
+Unidirectional data flow
+Networking
+Fetch API
+Typed API responses
+Error handling & normalization
+🏗️ Architecture Overview
+The project follows a feature-based architecture, not a screen-based one.
+src/
+├── components/ # Reusable UI components (Toast, Forms, Cards)
+├── screens/ # Screen-level components
+├── services/ # API & network logic
+├── utils/ # Validation schemas, helpers
+├── types/ # Global TypeScript types
+├── data/ # Dummy / mock data
+└── store/ # State management (if applicable)
+Why this architecture?
+Clear separation of concerns
+Scales cleanly as features grow
+Easy to test, refactor, and onboard new developers
+Prevents UI + business logic coupling
+🧾 Forms & Validation Strategy
+All forms (e.g., Pet Details Form) use schema-driven validation.
+Benefits
+Single source of truth
+Consistent frontend + backend rules
+Easier debugging
+Strong runtime guarantees
+Validation is handled using:
+Zod / Yup for runtime validation
+JSON Schema for portability and documentation
+🌐 Third-Party APIs Used
+Dog Image API (Dog CEO)
+Endpoint Example
+https://dog.ceo/api/breeds/image/random
+Reason for Usage
+Free and publicly available
+No authentication required
+Reliable image hosting
+Perfect for demos, prototypes, and learning projects
